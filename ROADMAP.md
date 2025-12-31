@@ -1,8 +1,11 @@
 # 🗺️ Doge-Hack Roadmap
 
-This document outlines the development trajectory for `doge-hack`, moving from a proof-of-concept to a robust tool for Dogecoin developers.
+**Goal**: Prove that Dogecoin is just Bitcoin in a yellow vest by constructing valid transactions using only standard Bitcoin tools.
 
-## 🟢 Phase 1: Core Fundamentals (Current Status: v0.1)
+## 🟢 Phase 1: The "Yellow Vest" Hack (Current Status: v0.1)
+*Focus: Identity and Structure*
+
+We start by mimicking the Dogecoin identity (Keys & Addresses) using Bitcoin cryptography.
 - [x] **Keypair Generation**: Generate ECDSA keys using `secp256k1`.
 - [x] **Address Encoding**: Custom Base58Check encoding for Dogecoin Testnet (`n`/`m` prefixes).
 - [x] **Transaction Construction**: Manual P2PKH script generation and transaction assembly.

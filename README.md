@@ -2,12 +2,29 @@
 
 **Doge-Hack** is a technical experiment and CLI tool demonstrating how to construct valid **Dogecoin (Testnet)** transactions using the standard `rust-bitcoin` library, without forking it.
 
+## 🏴‍☠️ The "Dogecoin is Bitcoin" Hack
+
+The core philosophy of this project is simple: **Dogecoin is just Bitcoin in a yellow vest.**
+
+Most Bitcoin Rust libraries can be used for Dogecoin by simply swapping a few parameters (Magic Bytes, Address Prefixes). This project demonstrates this "technical trivia" by using **pure `rust-bitcoin`**—the best Bitcoin library on the planet—to interact with Dogecoin.
+
+*   **Goal:** Manually construct and sign a Dogecoin transaction using standard Bitcoin tooling.
+*   **Why:** To profoundly understand the underlying data structures of the blockchain.
+
 ## 🚀 Key Features
 
 *   **No Forks**: Uses pure `rust-bitcoin` crate.
 *   **Custom Address Encodings**: Manually implements Base58Check encoding with Dogecoin Testnet prefixes (`0x71`).
 *   **Manual Transaction Construction**: Builds legacy P2PKH transactions field-by-field.
 *   **ECDSA Signing**: Uses `secp256k1` and `SighashCache` to sign inputs manually.
+
+## 🦀 Why Rust?
+
+Using Rust for this experiment compels you to handle the raw data structures explicitly.
+
+-   **Deep Understanding**: You can't just call `wallet.send()`. You have to understand `Script`, `Witness`, `Sighash`, and `Derivation` paths.
+-   **Type Safety vs. The Hack**: You'll fight the type system that tries to prevent you from using Bitcoin libraries for Dogecoin, forcing you to understand *exactly* where the two protocols differ (and where they are identical).
+-   **Performance**: It's the native language of modern blockchain development.
 
 ## 🛠️ Installation
 
