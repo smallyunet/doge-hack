@@ -2,16 +2,21 @@ use bitcoin::secp256k1::PublicKey;
 use bitcoin::hashes::{sha256, ripemd160, Hash};
 use bitcoin::base58;
 
+use crate::network::Network;
+
 /// Scaffolding for Dogecoin Address generation
 /// 
-/// Dogecoin Testnet P2PKH start with 'n' or 'm' (113 decimal = 0x71)
+/// Dogecoin addresses use different prefixes based on network:
+/// - Testnet P2PKH: 'n' or 'm' (version byte 0x71)
+/// - Mainnet P2PKH: 'D' (version byte 0x1E)
 pub struct DogeAddress {
     pub payload: Vec<u8>,
+    pub network: Network,
 }
 
 impl DogeAddress {
-    /// Create a new DogeAddress from a public key
-    pub fn from_pubkey(public_key: &PublicKey) -> Self {
+    /// Create a new DogeAddress from a public key with network configuration
+    pub fn from_pubkey(public_key: &PublicKey, network: Network) -> Self {
         // 1. Serialize Public Key (Compressed)
         let pk_bytes = public_key.serialize();
 
@@ -21,12 +26,23 @@ impl DogeAddress {
         // 3. RIPEMD160(SHA256(PublicKey))
         let ripemd_hash = ripemd160::Hash::hash(sha_hash.as_byte_array());
 
-        // 4. Prepend Network Byte (0x71 for Dogecoin Testnet)
+        // 4. Prepend Network Byte
+        let version_byte = network.p2pkh_version_byte();
         let mut payload = Vec::with_capacity(21);
-        payload.push(0x71);
+        payload.push(version_byte);
         payload.extend_from_slice(ripemd_hash.as_byte_array());
 
-        Self { payload }
+        Self { payload, network }
+    }
+
+    /// Create a new DogeAddress for Testnet (convenience method)
+    pub fn from_pubkey_testnet(public_key: &PublicKey) -> Self {
+        Self::from_pubkey(public_key, Network::Testnet)
+    }
+
+    /// Create a new DogeAddress for Mainnet (convenience method)
+    pub fn from_pubkey_mainnet(public_key: &PublicKey) -> Self {
+        Self::from_pubkey(public_key, Network::Mainnet)
     }
 
     /// Extract the PubKeyHash (20 bytes) from the address
@@ -55,20 +71,41 @@ impl DogeAddress {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str::FromStr;
 
     #[test]
-    fn test_doge_address_prefix() {
-        // Use a fixed secret key to ensure deterministic output if needed, 
-        // or just check the property of the output string.
+    fn test_doge_address_testnet_prefix() {
         let secp = bitcoin::secp256k1::Secp256k1::new();
-        // Random key
         let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&b"12345678901234567890123456789012"[..]).unwrap();
         let public_key = PublicKey::from_secret_key(&secp, &secret_key);
 
-        let address = DogeAddress::from_pubkey(&public_key);
+        let address = DogeAddress::from_pubkey(&public_key, Network::Testnet);
         let s = address.to_string();
 
-        assert!(s.starts_with('n') || s.starts_with('m'), "Address {} should start with n or m", s);
+        assert!(s.starts_with('n') || s.starts_with('m'), "Testnet address {} should start with n or m", s);
+    }
+
+    #[test]
+    fn test_doge_address_mainnet_prefix() {
+        let secp = bitcoin::secp256k1::Secp256k1::new();
+        let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&b"12345678901234567890123456789012"[..]).unwrap();
+        let public_key = PublicKey::from_secret_key(&secp, &secret_key);
+
+        let address = DogeAddress::from_pubkey(&public_key, Network::Mainnet);
+        let s = address.to_string();
+
+        assert!(s.starts_with('D'), "Mainnet address {} should start with D", s);
+    }
+
+    #[test]
+    fn test_convenience_methods() {
+        let secp = bitcoin::secp256k1::Secp256k1::new();
+        let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&b"12345678901234567890123456789012"[..]).unwrap();
+        let public_key = PublicKey::from_secret_key(&secp, &secret_key);
+
+        let testnet_addr = DogeAddress::from_pubkey_testnet(&public_key);
+        let mainnet_addr = DogeAddress::from_pubkey_mainnet(&public_key);
+
+        assert!(testnet_addr.to_string().starts_with('n') || testnet_addr.to_string().starts_with('m'));
+        assert!(mainnet_addr.to_string().starts_with('D'));
     }
 }

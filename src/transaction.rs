@@ -6,7 +6,7 @@ use bitcoin::amount::Amount;
 use bitcoin::hashes::Hash;
 use bitcoin::sighash::{SighashCache, EcdsaSighashType};
 use bitcoin::secp256k1::{Secp256k1, SecretKey, Message};
-use hex::FromHex;
+
 
 use crate::address::DogeAddress;
 
@@ -85,10 +85,10 @@ impl TransactionBuilder {
 
         // 1. Create the transaction to sign
         // We need a temporary transaction structure because SighashCache borrows it
-        let mut tx = self.to_transaction_ref();
+        let tx = self.to_transaction_ref();
 
         // 2. Calculate Sighash
-        let mut sighash_cache = SighashCache::new(&mut tx);
+        let sighash_cache = SighashCache::new(&tx);
         let sighash = sighash_cache
             .legacy_signature_hash(
                 input_index, 
@@ -134,6 +134,7 @@ mod tests {
     use super::*;
     use bitcoin::secp256k1::{Secp256k1, SecretKey, PublicKey};
     use crate::address::DogeAddress;
+    use crate::network::Network;
 
     #[test]
     fn test_transaction_structure() {
@@ -145,7 +146,7 @@ mod tests {
         let secp = Secp256k1::new();
         let secret = SecretKey::from_slice(&b"12345678901234567890123456789012"[..]).unwrap();
         let pubkey = PublicKey::from_secret_key(&secp, &secret);
-        let address = DogeAddress::from_pubkey(&pubkey);
+        let address = DogeAddress::from_pubkey(&pubkey, Network::Testnet);
 
         builder.add_output(&address, 1000);
 

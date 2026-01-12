@@ -2,7 +2,7 @@
 
 **Goal**: Prove that Dogecoin is just Bitcoin in a yellow vest by constructing valid transactions using only standard Bitcoin tools.
 
-## 🟢 Phase 1: The "Yellow Vest" Hack (Current Status: v0.1)
+## 🟢 Phase 1: The "Yellow Vest" Hack (Status: ✅ Complete - v0.1)
 *Focus: Identity and Structure*
 
 We start by mimicking the Dogecoin identity (Keys & Addresses) using Bitcoin cryptography.
@@ -14,62 +14,71 @@ We start by mimicking the Dogecoin identity (Keys & Addresses) using Bitcoin cry
 
 ---
 
-## 🟡 Phase 2: Interactivity & Network (Next Steps)
-The current tool works with mocked data. The next goal is to interact with the real chain.
+## 🟢 Phase 2: Interactivity & Network (Status: ✅ Complete - v0.2)
+*Focus: CLI, Mainnet Support, and Network Interaction*
 
-### 2.1 RPC Integration
-- **Goal**: Fetch real UTXOs from a running Dogecoin Node (Dogecoind).
-- **Tasks**:
-    - Implement a JSON-RPC client.
-    - Add `fetch_utxo(txid, vout)` command.
-    - Add `broadcast_tx(hex)` command to push transactions to the network.
-
-### 2.2 Public API Support
-- **Goal**: Support lightweight usage without a full node.
-- **Tasks**:
-    - Integrate with public Block Explorers (e.g., Chain.so, BlockCypher) API.
-    - Fetch UTXOs by address (scan for funds).
-
-### 2.3 Command Line Interface (CLI) Polish
+### 2.1 Command Line Interface (CLI) ✅
 - **Goal**: Make the tool usable via arguments rather than hardcoded `main.rs`.
-- **Tasks**:
-    - Adopt `clap` for argument parsing.
-    - Example: `doge-hack gen-key`, `doge-hack sign --txid <ID> --sk <KEY>`.
+- **Implementation**:
+    - [x] Adopted `clap` for argument parsing.
+    - [x] Subcommands: `gen-key`, `address`, `sign`, `broadcast`, `fetch-utxo`, `demo`.
+    - [x] Global `--network` flag for testnet/mainnet selection.
+
+### 2.2 Dogecoin Mainnet Support ✅
+- **Goal**: Support real Dogecoin addresses (`D` prefix).
+- **Implementation**:
+    - [x] `Network` enum with configurable version bytes.
+    - [x] Testnet: `0x71` → `n`/`m` prefix.
+    - [x] Mainnet: `0x1E` → `D` prefix.
+
+### 2.3 RPC Integration ✅
+- **Goal**: Fetch real UTXOs from a running Dogecoin Node (Dogecoind).
+- **Implementation**:
+    - [x] JSON-RPC client with configurable endpoint.
+    - [x] `fetch_utxo(txid, vout)` command via `getrawtransaction`.
+    - [x] `broadcast_tx(hex)` command via `sendrawtransaction`.
+
+### 2.4 Library Modularization ✅
+- **Goal**: Separate `src/lib.rs` from `src/main.rs`.
+- **Implementation**:
+    - [x] Created `lib.rs` exporting public modules.
+    - [x] Modules: `address`, `transaction`, `network`, `rpc`.
 
 ---
 
-## 🟠 Phase 3: Advanced Transaction Types
+## 🟡 Phase 3: Advanced Transaction Types (Next Steps)
 Expand support beyond simple P2PKH transfers.
 
 ### 3.1 P2SH (Pay to Script Hash)
 - **Goal**: Support multisig and custom scripts.
 - **Tasks**:
-    - Implement P2SH address encoding (different prefix).
-    - Construct `OP_HASH160` redeem scripts.
+    - [ ] Implement P2SH address encoding (different prefix).
+    - [ ] Construct `OP_HASH160` redeem scripts.
 
-### 3.2 Dogecoin Mainnet Support
-- **Goal**: Support real Dogecoin addresses (`D` prefix).
+### 3.2 Public API Support
+- **Goal**: Support lightweight usage without a full node.
 - **Tasks**:
-    - Make `Network` configurable (Testnet vs Mainnet).
-    - Update address generation logic to switch prefixes dynamically.
+    - [ ] Integrate with public Block Explorers (e.g., Chain.so, BlockCypher) API.
+    - [ ] Fetch UTXOs by address (scan for funds).
 
 ---
 
 ## 🔴 Phase 4: Library Extraction
 Refactor the hack into a reusable crate.
 
-### 4.1 Modularization
-- **Goal**: Separate `src/lib.rs` from `src/main.rs`.
+### 4.1 Publish to crates.io
+- **Goal**: Publish `doge-hack-core` for other Rust projects.
 - **Tasks**:
-    - Publish `doge-hack-core` or similar to crates.io (optional).
-    - Provide a clean API for other Rust projects to interact with Dogecoin without forking `rust-bitcoin`.
+    - [ ] Add comprehensive documentation.
+    - [ ] Provide clean API for Dogecoin interaction.
 
 ---
 
 ## 📅 Roadmap Timeline
 
-| Milestone | Estimated ETA | Focus |
+| Milestone | Status | Focus |
 | :--- | :--- | :--- |
-| **v0.2** | Q1 2025 | CLI Args (`clap`) + Mainnet Support |
-| **v0.3** | Q2 2025 | JSON-RPC Integration (Real network interaction) |
-| **v1.0** | Q3 2025 | Stable Release + Comprehensive Docs |
+| **v0.1** | ✅ Complete | Keypair, Address, Transaction, Signing |
+| **v0.2** | ✅ Complete | CLI (`clap`) + Mainnet + RPC Integration |
+| **v0.3** | 🟡 Next | P2SH Support + Public API |
+| **v1.0** | 🔴 Planned | Stable Release + Comprehensive Docs |
