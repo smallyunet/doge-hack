@@ -15,6 +15,8 @@ pub mod address;
 pub mod transaction;
 pub mod network;
 pub mod rpc;
+pub mod script;
+pub mod explorer;
 
 pub use address::DogeAddress;
 pub use transaction::TransactionBuilder;

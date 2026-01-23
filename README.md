@@ -38,10 +38,65 @@ cargo build
 
 ## 📖 Usage
 
-Run the CLI tool to execute the full demonstration flow:
+Show help:
 
 ```bash
-cargo run
+cargo run -- --help
+```
+
+Run the demo flow:
+
+```bash
+cargo run -- demo
+```
+
+Generate a keypair:
+
+```bash
+cargo run -- --network testnet gen-key
+```
+
+Fetch UTXOs for an address without a full node (public API):
+
+```bash
+cargo run -- --network testnet fetch-utxos-address --address <ADDR>
+```
+
+Create a P2SH multisig address:
+
+```bash
+cargo run -- --network testnet p2sh-multisig -m 2 -k <PUBKEY1_HEX> -k <PUBKEY2_HEX> -k <PUBKEY3_HEX>
+```
+
+Sign a spendable transaction (auto prevout via RPC):
+
+```bash
+cargo run -- --network testnet sign \
+	--txid <UTXO_TXID> --vout <VOUT> \
+	--secret-key <SENDER_PRIVKEY_HEX> \
+	--to <DEST_ADDR> --amount <SATOSHIS> \
+	--fee 1000000 \
+	--rpc-url http://127.0.0.1:44555 --rpc-user <USER> --rpc-pass <PASS>
+```
+
+Sign a spendable transaction (auto prevout via SoChain v3, requires API key):
+
+```bash
+export CHAIN_SO_API_KEY=<YOUR_API_KEY>
+cargo run -- --network testnet sign \
+	--txid <UTXO_TXID> --vout <VOUT> \
+	--secret-key <SENDER_PRIVKEY_HEX> \
+	--to <DEST_ADDR> --amount <SATOSHIS> --fee 1000000
+```
+
+Manual prevout override (no RPC/public API):
+
+```bash
+cargo run -- --network testnet sign \
+	--txid <UTXO_TXID> --vout <VOUT> \
+	--secret-key <SENDER_PRIVKEY_HEX> \
+	--to <DEST_ADDR> --amount <SATOSHIS> --fee 1000000 \
+	--prev-value <INPUT_SATS> --prev-script-hex <SCRIPT_PUBKEY_HEX>
 ```
 
 ### What happens?

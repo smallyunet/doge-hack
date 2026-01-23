@@ -1,5 +1,5 @@
 use bitcoin::{Transaction, TxIn, TxOut, OutPoint, Txid, Sequence, ScriptBuf};
-use bitcoin::opcodes::all::{OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG};
+use bitcoin::opcodes::all::{OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG, OP_EQUAL, OP_PUSHBYTES_0};
 use bitcoin::blockdata::script::Builder as ScriptBuilder;
 use bitcoin::absolute::LockTime;
 use bitcoin::amount::Amount;
@@ -8,7 +8,7 @@ use bitcoin::sighash::{SighashCache, EcdsaSighashType};
 use bitcoin::secp256k1::{Secp256k1, SecretKey, Message};
 
 
-use crate::address::DogeAddress;
+use crate::address::{AddressKind, DogeAddress};
 
 /// Scaffolding for Dogecoin Transaction Construction
 /// 
@@ -43,17 +43,22 @@ impl TransactionBuilder {
 
     /// Add an output to a destination address
     pub fn add_output(&mut self, address: &DogeAddress, amount_satoshis: u64) {
-        // Build P2PKH Script: OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
-        let pubkey_hash = address.pubkey_hash();
-        
-        // Manual Script Construction
-        let script_pubkey = ScriptBuilder::new()
-            .push_opcode(OP_DUP)
-            .push_opcode(OP_HASH160)
-            .push_slice(<&bitcoin::script::PushBytes>::try_from(pubkey_hash).expect("valid push bytes")) // Push the 20-byte hash
-            .push_opcode(OP_EQUALVERIFY)
-            .push_opcode(OP_CHECKSIG)
-            .into_script();
+        let hash160 = address.hash160();
+
+        let script_pubkey = match address.kind() {
+            AddressKind::P2pkh => ScriptBuilder::new()
+                .push_opcode(OP_DUP)
+                .push_opcode(OP_HASH160)
+                .push_slice(<&bitcoin::script::PushBytes>::try_from(hash160).expect("valid push bytes"))
+                .push_opcode(OP_EQUALVERIFY)
+                .push_opcode(OP_CHECKSIG)
+                .into_script(),
+            AddressKind::P2sh => ScriptBuilder::new()
+                .push_opcode(OP_HASH160)
+                .push_slice(<&bitcoin::script::PushBytes>::try_from(hash160).expect("valid push bytes"))
+                .push_opcode(OP_EQUAL)
+                .into_script(),
+        };
 
         let output = TxOut {
             value: Amount::from_sat(amount_satoshis),
@@ -112,6 +117,47 @@ impl TransactionBuilder {
 
         // 5. Update Input
         self.inputs[input_index].script_sig = script_sig;
+    }
+
+    /// Sign a legacy P2SH multisig input.
+    ///
+    /// `redeem_script` is used as the scriptCode for legacy sighash.
+    /// The resulting scriptSig is: OP_0 <sig1> <sig2> ... <redeem_script>
+    pub fn sign_input_p2sh_multisig(
+        &mut self,
+        input_index: usize,
+        secret_keys: &[SecretKey],
+        redeem_script: &ScriptBuf,
+    ) {
+        let secp = Secp256k1::new();
+        let tx = self.to_transaction_ref();
+
+        let mut sigs: Vec<Vec<u8>> = Vec::with_capacity(secret_keys.len());
+        for sk in secret_keys {
+            let sighash_cache = SighashCache::new(&tx);
+            let sighash = sighash_cache
+                .legacy_signature_hash(
+                    input_index,
+                    redeem_script,
+                    EcdsaSighashType::All.to_u32(),
+                )
+                .expect("Sighash generation failed");
+
+            let message = Message::from_digest(sighash.to_byte_array());
+            let signature = secp.sign_ecdsa(&message, sk);
+
+            let mut sig_with_hashtype = signature.serialize_der().to_vec();
+            sig_with_hashtype.push(EcdsaSighashType::All.to_u32() as u8);
+            sigs.push(sig_with_hashtype);
+        }
+
+        let mut b = ScriptBuilder::new().push_opcode(OP_PUSHBYTES_0);
+        for s in sigs {
+            b = b.push_slice(<&bitcoin::script::PushBytes>::try_from(s.as_slice()).expect("valid push bytes"));
+        }
+
+        b = b.push_slice(<&bitcoin::script::PushBytes>::try_from(redeem_script.as_bytes()).expect("valid push bytes"));
+        self.inputs[input_index].script_sig = b.into_script();
     }
 
     // Helper to create a transaction reference for SighashCache
