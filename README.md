@@ -121,3 +121,15 @@ Run unit tests:
 ```bash
 cargo test
 ```
+
+## 📚 Docs (GitHub Pages)
+
+This repo ships an mdBook under `docs/` and a GitHub Actions workflow that deploys it to GitHub Pages.
+
+- Online (after enabling Pages): https://smallyunet.github.io/doge-hack/
+- Build locally:
+
+```bash
+cargo install mdbook --locked
+mdbook serve docs
+```

@@ -1,0 +1,11 @@
+[book]
+title = "Doge-Hack"
+authors = ["smallyunet"]
+language = "en"
+multilingual = false
+src = "src"
+
+[output.html]
+# Update this after enabling Pages if you want "Edit this page" links.
+# git-repository-url = "https://github.com/smallyunet/doge-hack"
+# edit-url-template = "https://github.com/smallyunet/doge-hack/edit/main/docs/{path}"
